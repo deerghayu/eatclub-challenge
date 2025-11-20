@@ -62,9 +62,6 @@ public class DealService {
         return TimeParser.isWithinOperatingHours(queryTime, openTime, closeTime);
     }
 
-    /**
-     * Maps a Restaurant and Deal to a DealDto.
-     */
     private DealDto mapToDto(Restaurant restaurant, Deal deal) {
         return DealDto.builder()
                 .restaurantObjectId(restaurant.getObjectId())

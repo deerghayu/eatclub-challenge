@@ -63,9 +63,6 @@ public class PeakTimeService {
         }
     }
 
-    /**
-     * Finds the time interval with maximum concurrent deals.
-     */
     private Optional<TimeInterval> findPeakInterval(List<Restaurant> restaurants) {
         Map<Integer, Integer> timeEvents = createTimeEvents(restaurants);
 
@@ -78,10 +75,6 @@ public class PeakTimeService {
         return selectOptimalPeak(peaks);
     }
 
-    /**
-     * Creates time-based events from restaurant operating hours.
-     * Each event represents a change in the number of active deals.
-     */
     private Map<Integer, Integer> createTimeEvents(List<Restaurant> restaurants) {
         Map<Integer, Integer> events = new HashMap<>();
 
@@ -93,9 +86,6 @@ public class PeakTimeService {
         return events;
     }
 
-    /**
-     * Adds opening and closing events for a restaurant.
-     */
     private void addRestaurantEvents(Map<Integer, Integer> events, Restaurant restaurant) {
         try {
             TimeWindow window = parseTimeWindow(restaurant);
@@ -117,9 +107,6 @@ public class PeakTimeService {
         }
     }
 
-    /**
-     * Finds all time windows with the maximum number of concurrent deals.
-     */
     private List<TimeInterval> findPeakWindows(Map<Integer, Integer> timeEvents) {
         List<Integer> sortedTimes = timeEvents.keySet().stream()
                 .sorted()
@@ -139,20 +126,12 @@ public class PeakTimeService {
         return tracker.getPeaks();
     }
 
-    /**
-     * Selects the best peak using tie-breaking rules:
-     * 1. Earliest start time
-     * 2. Longest duration if starts are equal
-     */
     private Optional<TimeInterval> selectOptimalPeak(List<TimeInterval> peaks) {
         return peaks.stream()
                 .min(Comparator.comparingInt(TimeInterval::getStartMinutes)
                         .thenComparing(Comparator.comparingInt(TimeInterval::length).reversed()));
     }
 
-    /**
-     * Formats a time interval for the response.
-     */
     private PeakTimeResponse toResponse(TimeInterval interval) {
         String start = formatMinutes(interval.getStartMinutes());
         String end = formatMinutes(interval.getEndMinutes());
@@ -161,9 +140,6 @@ public class PeakTimeService {
         return new PeakTimeResponse(start, end);
     }
 
-    /**
-     * Checks if a restaurant has valid deals.
-     */
     private boolean hasValidDeals(Restaurant restaurant) {
         return restaurant.getDeals() != null && !restaurant.getDeals().isEmpty();
     }
@@ -188,9 +164,6 @@ public class PeakTimeService {
         return time.format(OUTPUT_FORMAT).toLowerCase();
     }
 
-    /**
-     * Inner class to track peak intervals during the sweep.
-     */
     private static class PeakTracker {
         private int currentCount = 0;
         private int maxCount = 0;
@@ -224,9 +197,6 @@ public class PeakTimeService {
         }
     }
 
-    /**
-     * Represents a restaurant's operating time window in minutes since midnight.
-     */
     private record TimeWindow(int openMinutes, int closeMinutes) {
         boolean spansMidnight() {
             return openMinutes > closeMinutes;

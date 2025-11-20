@@ -2,10 +2,14 @@ package com.eatclub.challenge.controller;
 
 import com.eatclub.challenge.dto.DealDto;
 import com.eatclub.challenge.dto.DealResponse;
+import com.eatclub.challenge.dto.ErrorResponse;
 import com.eatclub.challenge.dto.PeakTimeResponse;
 import com.eatclub.challenge.service.DealService;
 import com.eatclub.challenge.service.PeakTimeService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -33,9 +37,13 @@ public class DealsController {
     private final PeakTimeService peakTimeService;
 
     @GetMapping
-    @Operation(summary = "Get active deals", description = "Fetches all active restaurant deals for the specified time of day.")
+    @Operation(summary = "Get active deals", description = "Fetches all active restaurant deals for the specified time of day")
     @ApiResponse(responseCode = "200", description = "Active deals retrieved successfully")
-    public ResponseEntity<DealResponse> getActiveDeals(@RequestParam String timeOfDay) {
+    @ApiResponse(responseCode = "400", description = "Invalid time format", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "503", description = "Unable to fetch restaurant data", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    public ResponseEntity<DealResponse> getActiveDeals(
+            @Parameter(description = "Time of day (e.g., 3:00pm, 15:00)", example = "3:00pm")
+            @RequestParam String timeOfDay) {
         log.info("Received request for active deals at time: {}", timeOfDay);
 
         List<DealDto> deals = dealService.getActiveDeals(timeOfDay);
@@ -45,8 +53,10 @@ public class DealsController {
     }
 
     @GetMapping("/peak")
-    @Operation(summary = "Get peak time", description = "Calculates the peak time window when the maximum number of deals are simultaneously available.")
+    @Operation(summary = "Get peak time window", description = "Calculates when the maximum number of deals are simultaneously available")
     @ApiResponse(responseCode = "200", description = "Peak time calculated successfully")
+    @ApiResponse(responseCode = "500", description = "Calculation error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "503", description = "Unable to fetch restaurant data", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<PeakTimeResponse> getPeakTime() {
         log.info("Received request for peak time calculation");
 
