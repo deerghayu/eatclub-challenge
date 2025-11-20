@@ -2,7 +2,9 @@ package com.eatclub.challenge.controller;
 
 import com.eatclub.challenge.dto.DealDto;
 import com.eatclub.challenge.dto.DealResponse;
+import com.eatclub.challenge.dto.PeakTimeResponse;
 import com.eatclub.challenge.service.DealService;
+import com.eatclub.challenge.service.PeakTimeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +21,7 @@ import java.util.List;
 public class DealsController {
 
     private final DealService dealService;
+    private final PeakTimeService peakTimeService;
 
     @GetMapping
     public DealResponse getActiveDeals(@RequestParam String timeOfDay) {
@@ -28,5 +31,15 @@ public class DealsController {
 
         log.info("Returning {} active deals for time: {}", deals.size(), timeOfDay);
         return new DealResponse(deals);
+    }
+
+    @GetMapping("/peak")
+    public PeakTimeResponse getPeakTime() {
+        log.info("Received request for peak time calculation");
+
+        PeakTimeResponse response = peakTimeService.calculatePeakTime();
+
+        log.info("Returning peak time: {} - {}", response.getPeakTimeStart(), response.getPeakTimeEnd());
+        return response;
     }
 }
