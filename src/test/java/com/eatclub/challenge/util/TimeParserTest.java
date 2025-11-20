@@ -1,5 +1,6 @@
 package com.eatclub.challenge.util;
 
+import com.eatclub.challenge.exception.InvalidTimeFormatException;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalTime;
@@ -23,19 +24,19 @@ class TimeParserTest {
 
     @Test
     void parseTime_invalidFormat_throwsException() {
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(InvalidTimeFormatException.class,
                 () -> TimeParser.parseTime("invalid"));
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(InvalidTimeFormatException.class,
                 () -> TimeParser.parseTime("25:00"));
     }
 
     @Test
     void parseTime_nullOrEmpty_throwsException() {
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(InvalidTimeFormatException.class,
                 () -> TimeParser.parseTime(null));
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(InvalidTimeFormatException.class,
                 () -> TimeParser.parseTime(""));
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(InvalidTimeFormatException.class,
                 () -> TimeParser.parseTime("   "));
     }
 

@@ -2,6 +2,8 @@ package com.eatclub.challenge.service;
 
 import com.eatclub.challenge.client.RestaurantDataClient;
 import com.eatclub.challenge.dto.PeakTimeResponse;
+import com.eatclub.challenge.exception.PeakTimeCalculationException;
+import com.eatclub.challenge.exception.RestaurantDataException;
 import com.eatclub.challenge.model.TimeInterval;
 import com.eatclub.challenge.model.domain.Restaurant;
 import com.eatclub.challenge.util.TimeParser;
@@ -31,23 +33,34 @@ public class PeakTimeService {
 
     /**
      * Calculates when the maximum number of deals are simultaneously available.
+     *
+     * @return peak time window with start and end times
+     * @throws RestaurantDataException      if unable to fetch restaurant data
+     * @throws PeakTimeCalculationException if calculation fails
      */
     public PeakTimeResponse calculatePeakTime() {
         log.info("Calculating peak time window");
 
-        List<Restaurant> restaurants = dataClient.fetchRestaurants();
+        try {
+            List<Restaurant> restaurants = dataClient.fetchRestaurants();
 
-        if (restaurants.isEmpty()) {
-            log.warn("No restaurants found");
-            return new PeakTimeResponse(null, null);
+            if (restaurants.isEmpty()) {
+                log.warn("No restaurants found");
+                return new PeakTimeResponse(null, null);
+            }
+
+            return findPeakInterval(restaurants)
+                    .map(this::toResponse)
+                    .orElseGet(() -> {
+                        log.warn("No valid peak found");
+                        return new PeakTimeResponse(null, null);
+                    });
+        } catch (RestaurantDataException e) {
+            throw e; // Re-throw to be handled by GlobalExceptionHandler
+        } catch (Exception e) {
+            log.error("Unexpected error during peak time calculation", e);
+            throw new PeakTimeCalculationException("Failed to calculate peak time", e);
         }
-
-        return findPeakInterval(restaurants)
-                .map(this::toResponse)
-                .orElseGet(() -> {
-                    log.warn("No valid peak found");
-                    return new PeakTimeResponse(null, null);
-                });
     }
 
     /**

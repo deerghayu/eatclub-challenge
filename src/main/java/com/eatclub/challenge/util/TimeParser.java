@@ -1,6 +1,7 @@
 package com.eatclub.challenge.util;
 
 
+import com.eatclub.challenge.exception.InvalidTimeFormatException;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,11 +45,11 @@ public class TimeParser {
      *
      * @param timeStr time string to parse
      * @return parsed LocalTime
-     * @throws IllegalArgumentException if unable to parse
+     * @throws InvalidTimeFormatException if unable to parse
      */
     public static LocalTime parseTime(String timeStr) {
         if (timeStr == null || timeStr.isBlank()) {
-            throw new IllegalArgumentException("Time cannot be null or empty");
+            throw new InvalidTimeFormatException("Time cannot be null or empty");
         }
 
         for (DateTimeFormatter formatter : FORMATTERS) {
@@ -59,9 +60,9 @@ public class TimeParser {
             }
         }
 
-        throw new IllegalArgumentException(
-                "Unable to parse time: " + timeStr +
-                        ". Expected formats: 3:00pm, 15:00, etc."
+        throw new InvalidTimeFormatException(
+                "Unable to parse time: '" + timeStr +
+                        "'. Expected formats: 3:00pm, 3:00 pm, 15:00, etc."
         );
     }
 
