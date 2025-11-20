@@ -52,7 +52,7 @@ public class DealsController {
         return ResponseEntity.ok(new DealResponse(deals));
     }
 
-    @GetMapping("/peak")
+    @GetMapping("/peak-time")
     @Operation(summary = "Get peak time window", description = "Calculates when the maximum number of deals are simultaneously available")
     @ApiResponse(responseCode = "200", description = "Peak time calculated successfully")
     @ApiResponse(responseCode = "500", description = "Calculation error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
