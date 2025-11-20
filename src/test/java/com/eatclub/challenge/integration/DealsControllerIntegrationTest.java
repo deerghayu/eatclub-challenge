@@ -2,7 +2,10 @@ package com.eatclub.challenge.integration;
 
 import com.eatclub.challenge.dto.DealDto;
 import com.eatclub.challenge.dto.DealResponse;
+import com.eatclub.challenge.dto.ErrorResponse;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -11,70 +14,58 @@ import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
+/**
+ * Integration tests for Deals Controller with real data.
+ */
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class DealsControllerIntegrationTest {
 
     @Autowired
     private TestRestTemplate restTemplate;
 
-    @Test
-    void getActiveDeals_with3pm_returnsActiveDeals() {
-        // When
+    @ParameterizedTest
+    @CsvSource({
+            "3:00pm, 8",
+            "6:00pm, 9",
+            "9:00pm, 9"
+    })
+    void getActiveDeals_validTime_returnsExpectedDeals(String timeOfDay, int expectedCount) {
         ResponseEntity<DealResponse> response = restTemplate.getForEntity(
-                "/api/v1/deals?timeOfDay=3:00pm",
+                "/api/v1/deals?timeOfDay=" + timeOfDay,
                 DealResponse.class
         );
 
-        // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+
         List<DealDto> deals = response.getBody().getDeals();
-        assertNotNull(deals);
-        assertFalse(deals.isEmpty());
+        assertThat(deals)
+                .isNotNull()
+                .hasSize(expectedCount);
 
-        assertEquals(8, deals.size(), "Expected 8 active deals at 3:00pm");
-
-        var firstDeal = deals.get(0);
-        assertNotNull(firstDeal.getRestaurantObjectId());
-        assertNotNull(firstDeal.getRestaurantName());
-        assertNotNull(firstDeal.getDealObjectId());
-        assertNotNull(firstDeal.getDiscount());
+        // Validate structure of first deal
+        if (!deals.isEmpty()) {
+            DealDto firstDeal = deals.get(0);
+            assertThat(firstDeal.getRestaurantObjectId()).isNotNull();
+            assertThat(firstDeal.getRestaurantName()).isNotNull();
+            assertThat(firstDeal.getDealObjectId()).isNotNull();
+            assertThat(firstDeal.getDiscount()).isNotNull();
+        }
     }
 
     @Test
-    void getActiveDeals_with6pm_returnsActiveDeals() {
-        // When
-        ResponseEntity<DealResponse> response = restTemplate.getForEntity(
-                "/api/v1/deals?timeOfDay=6:00pm",
-                DealResponse.class
+    void getActiveDeals_invalidTimeFormat_returnsBadRequest() {
+        ResponseEntity<ErrorResponse> response = restTemplate.getForEntity(
+                "/api/v1/deals?timeOfDay=invalid",
+                ErrorResponse.class
         );
 
-        // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-
-        List<DealDto> deals = response.getBody().getDeals();
-        assertNotNull(deals);
-        assertEquals(9, deals.size(), "Expected 9 active deals at 6:00pm");
-    }
-
-    @Test
-    void getActiveDeals_with9pm_returnsActiveDeals() {
-        // When
-        ResponseEntity<DealResponse> response = restTemplate.getForEntity(
-                "/api/v1/deals?timeOfDay=9:00pm",
-                DealResponse.class
-        );
-
-        // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-
-        List<DealDto> deals = response.getBody().getDeals();
-        assertNotNull(deals);
-        assertEquals(9, deals.size(), "Expected 9 active deals at 9:00pm");
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getStatus()).isEqualTo(400);
+        assertThat(response.getBody().getMessage()).contains("Unable to parse time");
     }
 }
