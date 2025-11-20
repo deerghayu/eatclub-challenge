@@ -4,12 +4,13 @@ import com.eatclub.challenge.client.RestaurantDataClient;
 import com.eatclub.challenge.dto.DealDto;
 import com.eatclub.challenge.model.domain.Deal;
 import com.eatclub.challenge.model.domain.Restaurant;
+import com.eatclub.challenge.util.TimeParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Service for handling deal-related operations.
@@ -22,25 +23,27 @@ public class DealService {
     private final RestaurantDataClient dataClient;
 
     /**
-     * Retrieves all deals from all restaurants.
-     *
-     * @return list of DealDto representing all deals
+     * Retrieves all active deals from all restaurants.
      */
-    public List<DealDto> getAllDeals() {
+    public List<DealDto> getActiveDeals(String timeOfDay) {
+        LocalTime queryTime = TimeParser.parseTime(timeOfDay);
         List<Restaurant> restaurants = dataClient.fetchRestaurants();
 
         return restaurants.stream()
+                .filter(restaurant -> isRestaurantOpen(restaurant, queryTime))
                 .flatMap(restaurant -> restaurant.getDeals().stream()
                         .map(deal -> mapToDto(restaurant, deal)))
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    private boolean isRestaurantOpen(Restaurant restaurant, LocalTime queryTime) {
+        LocalTime openTime = TimeParser.parseTime(restaurant.getOpen());
+        LocalTime closeTime = TimeParser.parseTime(restaurant.getClose());
+        return TimeParser.isWithinOperatingHours(queryTime, openTime, closeTime);
     }
 
     /**
      * Maps a Restaurant and Deal to a DealDto.
-     *
-     * @param restaurant the restaurant
-     * @param deal       the deal
-     * @return the mapped DealDto
      */
     private DealDto mapToDto(Restaurant restaurant, Deal deal) {
         return DealDto.builder()

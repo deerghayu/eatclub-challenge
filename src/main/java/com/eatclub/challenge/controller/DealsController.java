@@ -21,13 +21,12 @@ public class DealsController {
     private final DealService dealService;
 
     @GetMapping
-    public DealResponse getDeals(@RequestParam(required = false) String timeOfDay) {
-        log.info("Received request to get deals with timeOfDay filter: {}", timeOfDay);
+    public DealResponse getActiveDeals(@RequestParam String timeOfDay) {
+        log.info("Received request for active deals at time: {}", timeOfDay);
 
-        // No filtering yet - returns all deals
-        List<DealDto> deals = dealService.getAllDeals();
+        List<DealDto> deals = dealService.getActiveDeals(timeOfDay);
 
-        log.info("Returning {} deals", deals.size());
+        log.info("Returning {} active deals for time: {}", deals.size(), timeOfDay);
         return new DealResponse(deals);
     }
 }

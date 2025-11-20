@@ -1,5 +1,6 @@
 package com.eatclub.challenge.integration;
 
+import com.eatclub.challenge.dto.DealDto;
 import com.eatclub.challenge.dto.DealResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,33 +9,72 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-public class DealsControllerIntegrationTest {
+class DealsControllerIntegrationTest {
 
     @Autowired
-    TestRestTemplate restTemplate;
+    private TestRestTemplate restTemplate;
 
     @Test
-    void getDeals_shouldReturnsAllDeals() {
-        //When
-        ResponseEntity<DealResponse> response =
-                restTemplate.getForEntity("/api/v1/deals", DealResponse.class);
+    void getActiveDeals_with3pm_returnsActiveDeals() {
+        // When
+        ResponseEntity<DealResponse> response = restTemplate.getForEntity(
+                "/api/v1/deals?timeOfDay=3:00pm",
+                DealResponse.class
+        );
 
-        //Then
-        // Response validation
+        // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertNotNull(response.getBody().getDeals());
-        assertFalse(response.getBody().getDeals().isEmpty());
+        List<DealDto> deals = response.getBody().getDeals();
+        assertNotNull(deals);
+        assertFalse(deals.isEmpty());
 
-        // Structure validation
-        var firstDeal = response.getBody().getDeals().get(0);
+        assertEquals(8, deals.size(), "Expected 8 active deals at 3:00pm");
+
+        var firstDeal = deals.get(0);
         assertNotNull(firstDeal.getRestaurantObjectId());
         assertNotNull(firstDeal.getRestaurantName());
         assertNotNull(firstDeal.getDealObjectId());
         assertNotNull(firstDeal.getDiscount());
+    }
+
+    @Test
+    void getActiveDeals_with6pm_returnsActiveDeals() {
+        // When
+        ResponseEntity<DealResponse> response = restTemplate.getForEntity(
+                "/api/v1/deals?timeOfDay=6:00pm",
+                DealResponse.class
+        );
+
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+
+        List<DealDto> deals = response.getBody().getDeals();
+        assertNotNull(deals);
+        assertEquals(9, deals.size(), "Expected 9 active deals at 6:00pm");
+    }
+
+    @Test
+    void getActiveDeals_with9pm_returnsActiveDeals() {
+        // When
+        ResponseEntity<DealResponse> response = restTemplate.getForEntity(
+                "/api/v1/deals?timeOfDay=9:00pm",
+                DealResponse.class
+        );
+
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+
+        List<DealDto> deals = response.getBody().getDeals();
+        assertNotNull(deals);
+        assertEquals(9, deals.size(), "Expected 9 active deals at 9:00pm");
     }
 }
