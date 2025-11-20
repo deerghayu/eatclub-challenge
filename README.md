@@ -1,5 +1,7 @@
 # EatClub Restaurant Deals API
 
+[![CI](https://github.com/deerghayu/eatclub-challenge/actions/workflows/ci.yml/badge.svg)](https://github.com/deerghayu/eatclub-challenge/actions)
+
 REST API for querying restaurant deals and calculating peak availability times.
 
 ## Prerequisites
