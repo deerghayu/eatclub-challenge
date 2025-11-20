@@ -74,3 +74,13 @@ OpenAPI spec: **http://localhost:8080/v3/api-docs**
 - Lombok
 - SpringDoc OpenAPI (Swagger)
 - JUnit 5 + Mockito
+
+## Current Limitations
+
+The following production features are not implemented:
+
+- No Caching
+- No Rate Limiting
+- No Authentication/Authorization
+- No Data Persistence
+- No Observability
