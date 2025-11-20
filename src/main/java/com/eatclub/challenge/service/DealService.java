@@ -2,6 +2,7 @@ package com.eatclub.challenge.service;
 
 import com.eatclub.challenge.client.RestaurantDataClient;
 import com.eatclub.challenge.dto.DealDto;
+import com.eatclub.challenge.dto.DealResponse;
 import com.eatclub.challenge.exception.InvalidTimeFormatException;
 import com.eatclub.challenge.exception.RestaurantDataException;
 import com.eatclub.challenge.model.domain.Deal;
@@ -9,6 +10,9 @@ import com.eatclub.challenge.model.domain.Restaurant;
 import com.eatclub.challenge.util.TimeParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalTime;
@@ -48,6 +52,40 @@ public class DealService {
                 .flatMap(restaurant -> restaurant.getDeals().stream()
                         .map(deal -> mapToDto(restaurant, deal)))
                 .toList();
+    }
+
+    /**
+     * Retrieves active deals with pagination support.
+     *
+     * @param timeOfDay time to query (e.g., "3:00pm", "15:00")
+     * @param pageable  pagination parameters
+     * @return paginated response with deals and metadata
+     * @throws InvalidTimeFormatException if timeOfDay format is invalid
+     * @throws RestaurantDataException    if unable to fetch restaurant data
+     */
+    public DealResponse getActiveDeals(String timeOfDay, Pageable pageable) {
+        List<DealDto> allDeals = getActiveDeals(timeOfDay);
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), allDeals.size());
+
+        Page<DealDto> page;
+        if (start > allDeals.size()) {
+            page = new PageImpl<>(List.of(), pageable, allDeals.size());
+        } else {
+            List<DealDto> pageContent = allDeals.subList(start, end);
+            page = new PageImpl<>(pageContent, pageable, allDeals.size());
+        }
+
+        return DealResponse.builder()
+                .deals(page.getContent())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .currentPage(page.getNumber())
+                .pageSize(page.getSize())
+                .hasNext(page.hasNext())
+                .hasPrevious(page.hasPrevious())
+                .build();
     }
 
     private boolean hasValidData(Restaurant restaurant) {

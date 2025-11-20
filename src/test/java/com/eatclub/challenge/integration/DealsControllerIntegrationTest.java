@@ -40,20 +40,28 @@ class DealsControllerIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getDeals()).hasSize(expectedCount);
+    }
 
-        List<DealDto> deals = response.getBody().getDeals();
-        assertThat(deals)
-                .isNotNull()
-                .hasSize(expectedCount);
+    @ParameterizedTest
+    @CsvSource({
+            "0, 5, 5, 2, true, false",
+            "1, 5, 4, 2, false, true",
+            "10, 5, 0, 2, false, true"
+    })
+    void getActiveDeals_withPagination_returnsCorrectPage(
+            int page, int size, int expectedDeals, int totalPages, boolean hasNext, boolean hasPrevious) {
+        ResponseEntity<DealResponse> response = restTemplate.getForEntity(
+                "/api/v1/deals?timeOfDay=6:00pm&page=" + page + "&size=" + size,
+                DealResponse.class
+        );
 
-        // Validate structure of first deal
-        if (!deals.isEmpty()) {
-            DealDto firstDeal = deals.get(0);
-            assertThat(firstDeal.getRestaurantObjectId()).isNotNull();
-            assertThat(firstDeal.getRestaurantName()).isNotNull();
-            assertThat(firstDeal.getDealObjectId()).isNotNull();
-            assertThat(firstDeal.getDiscount()).isNotNull();
-        }
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        DealResponse body = response.getBody();
+        assertThat(body.getDeals()).hasSize(expectedDeals);
+        assertThat(body.getTotalPages()).isEqualTo(totalPages);
+        assertThat(body.isHasNext()).isEqualTo(hasNext);
+        assertThat(body.isHasPrevious()).isEqualTo(hasPrevious);
     }
 
     @Test
